@@ -20,7 +20,8 @@ indicator = st.sidebar.selectbox('Select Indicator', ['SMA', 'EMA', 'Bollinger B
 @st.cache_data
 def get_stock_data(ticker, start, end):
     data = yf.download(ticker, start=start, end=end)
-    data.columns = [f"{ticker}_{col}" if col not in ['Date'] else col for col in data.columns]
+    # Fix column names to remove tuple formatting
+    data.columns = [f"{ticker}_{col[1]}" if isinstance(col, tuple) else f"{ticker}_{col}" for col in data.columns]
     return data.reset_index()
 
 stock_data = get_stock_data(ticker, start_date, end_date)
