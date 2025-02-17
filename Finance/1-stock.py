@@ -1,83 +1,71 @@
+import inspect
+import textwrap
+
 import streamlit as st
-import streamlit.components.v1 as components
-import pandas as pd
-import json
 
-# Title and Description
-st.title('🌟 FP&A Dashboard with File Upload (D3.js & Streamlit)')
-st.write('Upload your Excel file to generate a Financial Planning & Analysis dashboard with interactive D3.js charts.')
+from demo_echarts import ST_DEMOS
+from demo_pyecharts import ST_PY_DEMOS
 
-# File Upload
-uploaded_file = st.file_uploader("Upload Excel File", type=["xlsx"])
 
-def load_data(file):
-    return pd.read_excel(file) if file else pd.DataFrame()
+def main():
+    st.title("Streamlit ECharts Demo")
 
-data = load_data(uploaded_file)
+    with st.sidebar:
+        st.header("Configuration")
+        api_options = ("echarts", "pyecharts")
+        selected_api = st.selectbox(
+            label="Choose your preferred API:",
+            options=api_options,
+        )
 
-if not data.empty:
-    st.dataframe(data)
+        page_options = (
+            list(ST_PY_DEMOS.keys())
+            if selected_api == "pyecharts"
+            else list(ST_DEMOS.keys())
+        )
+        selected_page = st.selectbox(
+            label="Choose an example",
+            options=page_options,
+        )
+        demo, url = (
+            ST_DEMOS[selected_page]
+            if selected_api == "echarts"
+            else ST_PY_DEMOS[selected_page]
+        )
 
-    # Enhanced D3.js Visualization
-    D3_CODE = """
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <script src="https://d3js.org/d3.v7.min.js"></script>
-        <style>
-            .bar { fill: #4CAF50; transition: fill 0.3s; }
-            .bar:hover { fill: #FF5722; }
-            .axis-label { font: 12px sans-serif; }
-        </style>
-    </head>
-    <body>
-        <svg width="700" height="450"></svg>
-        <script>
-            const data = JSON.parse(`$DATA`);
-            const margin = {top: 30, right: 40, bottom: 50, left: 60};
-            const width = 700 - margin.left - margin.right;
-            const height = 450 - margin.top - margin.bottom;
+        if selected_api == "echarts":
+            st.caption(
+                """ECharts demos are extracted from https://echarts.apache.org/examples/en/index.html, 
+            by copying/formattting the 'option' json object into st_echarts.
+            Definitely check the echarts example page, convert the JSON specs to Python Dicts and you should get a nice viz."""
+            )
+        if selected_api == "pyecharts":
+            st.caption(
+                """Pyecharts demos are extracted from https://github.com/pyecharts/pyecharts-gallery,
+            by copying the pyecharts object into st_pyecharts. 
+            Pyecharts is still using ECharts 4 underneath, which is why the theming between st_echarts and st_pyecharts is different."""
+            )
 
-            const svg = d3.select("svg")
-                .append("g")
-                .attr("transform", `translate(${margin.left},${margin.top})`);
+    demo()
 
-            const x = d3.scaleBand()
-                .domain(data.map(d => d.Month))
-                .range([0, width])
-                .padding(0.3);
+    sourcelines, _ = inspect.getsourcelines(demo)
+    with st.expander("Source Code"):
+        st.code(textwrap.dedent("".join(sourcelines[1:])))
+    st.markdown(f"Credit: {url}")
 
-            const y = d3.scaleLinear()
-                .domain([0, d3.max(data, d => d.Revenue)])
-                .nice()
-                .range([height, 0]);
 
-            svg.selectAll(".bar")
-                .data(data)
-                .join("rect")
-                .attr("class", "bar")
-                .attr("x", d => x(d.Month))
-                .attr("width", x.bandwidth())
-                .attr("y", height)
-                .attr("height", 0)
-                .transition()
-                .duration(800)
-                .attr("y", d => y(d.Revenue))
-                .attr("height", d => height - y(d.Revenue));
-
-            svg.append("g")
-                .call(d3.axisLeft(y).tickSize(-width).ticks(6))
-                .attr("class", "axis-label");
-            svg.append("g")
-                .attr("transform", `translate(0,${height})`)
-                .call(d3.axisBottom(x))
-                .attr("class", "axis-label");
-        </script>
-    </body>
-    </html>
-    """
-
-    html_code = D3_CODE.replace('$DATA', json.dumps(data.to_dict(orient='records')))
-    components.html(html_code, height=500)
-else:
-    st.warning("Please upload an Excel file with 'Month' and 'Revenue' columns.")
+if __name__ == "__main__":
+    st.set_page_config(
+        page_title="Streamlit ECharts Demo", page_icon=":chart_with_upwards_trend:"
+    )
+    main()
+    with st.sidebar:
+        st.markdown("---")
+        st.markdown(
+            '<h6>Made in &nbsp<img src="https://streamlit.io/images/brand/streamlit-mark-color.png" alt="Streamlit logo" height="16">&nbsp by <a href="https://twitter.com/andfanilo">@andfanilo</a></h6>',
+            unsafe_allow_html=True,
+        )
+        st.markdown(
+            '<div style="margin-top: 0.75em;"><a href="https://www.buymeacoffee.com/andfanilo" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="41" width="174"></a></div>',
+            unsafe_allow_html=True,
+        )
