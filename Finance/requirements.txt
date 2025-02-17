@@ -1,8 +1,2 @@
-streamlit
-pandas
-yfinance
-matplotlib
-seaborn
-plotly
-numpy
-openpyxl
+streamlit>=0.69
+streamlit-echarts>=0.4.0
