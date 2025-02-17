@@ -3,9 +3,9 @@ import pandas as pd
 import yfinance as yf
 import matplotlib.pyplot as plt
 import seaborn as sns
-import datetime
 import plotly.express as px
 import plotly.graph_objects as go
+import datetime
 
 # App Title
 st.title('🚀 Advanced Finance Dashboard: Stock Market Analysis')
@@ -19,7 +19,9 @@ indicator = st.sidebar.selectbox('Select Indicator', ['SMA', 'EMA', 'Bollinger B
 # Fetch Stock Data
 @st.cache_data
 def get_stock_data(ticker, start, end):
-    return yf.download(ticker, start=start, end=end)
+    data = yf.download(ticker, start=start, end=end)
+    data.columns = [col if isinstance(col, str) else col[1] for col in data.columns]
+    return data
 
 stock_data = get_stock_data(ticker, start_date, end_date)
 
@@ -57,9 +59,8 @@ st.metric(label="Average Volume", value=f"{stock_data['Volume'].mean():,.0f}")
 
 # Correlation Heatmap
 st.subheader('🔥 Correlation Heatmap')
-correlation = stock_data.corr()
 plt.figure(figsize=(6, 4))
-sns.heatmap(correlation, annot=True, cmap='coolwarm')
+sns.heatmap(stock_data.corr(), annot=True, cmap='coolwarm')
 st.pyplot(plt)
 
 # Footer
