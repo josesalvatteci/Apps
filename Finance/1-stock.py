@@ -1,68 +1,49 @@
 import streamlit as st
-import pandas as pd
-import yfinance as yf
-import matplotlib.pyplot as plt
-import seaborn as sns
-import plotly.express as px
-import plotly.graph_objects as go
-import datetime
+import streamlit.components.v1 as components
 
-# App Title
-st.title('🚀 Advanced Finance Dashboard: Stock Market Analysis')
+# Title and description
+st.title('FP&A Dashboard with D3.js')
+st.write('A simple financial planning and analysis dashboard using D3.js in Streamlit.')
 
-# Sidebar Controls
-ticker = st.sidebar.text_input('Stock Ticker (e.g., AAPL, TSLA):', 'AAPL')
-start_date = st.sidebar.date_input('Start Date', datetime.date(2020, 1, 1))
-end_date = st.sidebar.date_input('End Date', datetime.date.today())
-indicator = st.sidebar.selectbox('Select Indicator', ['SMA', 'EMA', 'Bollinger Bands'])
+# HTML for D3.js Visualization
+html_code = """
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    .bar { fill: steelblue; }
+    .bar:hover { fill: orange; }
+  </style>
+</head>
+<body>
+  <svg width="500" height="300"></svg>
+  <script>
+    const data = [30, 80, 45, 60, 20, 90, 55];
+    const svg = d3.select("svg"),
+          width = +svg.attr("width"),
+          height = +svg.attr("height"),
+          margin = {top: 20, right: 20, bottom: 30, left: 40},
+          barWidth = width / data.length;
 
-# Fetch Stock Data
-@st.cache_data
-def get_stock_data(ticker, start, end):
-    data = yf.download(ticker, start=start, end=end)
-    # Fix column names to remove tuple formatting
-    data.columns = [f"{ticker}_{col[1]}" if isinstance(col, tuple) else f"{ticker}_{col}" for col in data.columns]
-    return data.reset_index()
+    svg.selectAll(".bar")
+      .data(data)
+      .enter().append("rect")
+        .attr("class", "bar")
+        .attr("x", (d, i) => i * barWidth)
+        .attr("y", d => height - d)
+        .attr("width", barWidth - 5)
+        .attr("height", d => d)
+        .on("mouseover", function() {
+          d3.select(this).style("fill", "orange");
+        })
+        .on("mouseout", function() {
+          d3.select(this).style("fill", "steelblue");
+        });
+  </script>
+</body>
+</html>
+"""
 
-stock_data = get_stock_data(ticker, start_date, end_date)
-
-# Raw Data Table
-st.subheader(f'📄 {ticker} Data')
-st.data_editor(stock_data)
-
-# Price Chart with Indicators
-st.subheader('📈 Price Chart with Indicators')
-fig = px.line(stock_data, x='Date', y=f'{ticker}_Close', title=f'{ticker} Closing Prices')
-
-if indicator == 'SMA':
-    stock_data['SMA_20'] = stock_data[f'{ticker}_Close'].rolling(window=20).mean()
-    fig.add_scatter(x=stock_data['Date'], y=stock_data['SMA_20'], mode='lines', name='20-Day SMA')
-elif indicator == 'EMA':
-    stock_data['EMA_20'] = stock_data[f'{ticker}_Close'].ewm(span=20, adjust=False).mean()
-    fig.add_scatter(x=stock_data['Date'], y=stock_data['EMA_20'], mode='lines', name='20-Day EMA')
-else:
-    rolling_mean = stock_data[f'{ticker}_Close'].rolling(window=20).mean()
-    rolling_std = stock_data[f'{ticker}_Close'].rolling(window=20).std()
-    fig.add_scatter(x=stock_data['Date'], y=rolling_mean + 2*rolling_std, mode='lines', name='Upper Band')
-    fig.add_scatter(x=stock_data['Date'], y=rolling_mean - 2*rolling_std, mode='lines', name='Lower Band')
-
-st.plotly_chart(fig)
-
-# Volume Analysis
-st.subheader('📊 Volume Analysis')
-fig_volume = px.bar(stock_data, x='Date', y=f'{ticker}_Volume', title=f'{ticker} Trading Volume')
-st.plotly_chart(fig_volume)
-
-# Financial Metrics Summary
-st.subheader('💰 Financial Metrics')
-st.metric(label="Latest Close Price", value=f"${stock_data[f'{ticker}_Close'].iloc[-1]:.2f}")
-st.metric(label="Average Volume", value=f"{stock_data[f'{ticker}_Volume'].mean():,.0f}")
-
-# Correlation Heatmap
-st.subheader('🔥 Correlation Heatmap')
-plt.figure(figsize=(6, 4))
-sns.heatmap(stock_data.filter(regex=ticker).corr(), annot=True, cmap='coolwarm')
-st.pyplot(plt)
-
-# Footer
-st.text('💎 Powered by Streamlit, Yahoo Finance API, Plotly, and Matplotlib.')
+# Render D3.js visualization in Streamlit
+components.html(html_code, height=350)
