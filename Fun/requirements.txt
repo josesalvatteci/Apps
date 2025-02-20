@@ -4,3 +4,9 @@ pandas
 openpyxl
 numpy
 matplotlib
+streamlit
+pandas
+numpy
+matplotlib
+python-dotenv
+groq
