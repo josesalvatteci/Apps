@@ -28,6 +28,17 @@ def process_file(uploaded_file):
         st.error(f"Error reading file: {e}")
         return None
 
+def summarize_data(df):
+    """Generates a summary of the DataFrame to reduce data size before sending it to the AI."""
+    summary = {
+        "columns": list(df.columns),
+        "num_rows": len(df),
+        "num_columns": len(df.columns),
+        "missing_values": df.isnull().sum().to_dict(),
+        "summary_stats": df.describe().to_dict()
+    }
+    return summary
+
 if uploaded_file:
     sheets = process_file(uploaded_file)
     if sheets:
@@ -36,8 +47,8 @@ if uploaded_file:
         st.write("### Preview of Selected Sheet")
         st.dataframe(df)
 
-        # Convert DataFrame to JSON for AI processing
-        data_for_ai = df.to_json(orient='records')
+        # Generate a summarized version of the data
+        data_summary = summarize_data(df)
 
         # User Input for Question
         user_query = st.text_area("📝 Ask a question about the data")
@@ -45,9 +56,10 @@ if uploaded_file:
         if st.button("🔍 Analyze with AI") and user_query:
             client = Groq(api_key=GROQ_API_KEY)
             prompt = f"""
-            You are an AI data analyst. Answer questions based on the provided dataset.
-            Dataset: {data_for_ai}
-            User's Question: {user_query}
+            You are an AI data analyst. Below is a summary of the dataset:
+            {data_summary}
+            Based on this, answer the following question:
+            {user_query}
             """
 
             response = client.chat.completions.create(
