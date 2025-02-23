@@ -1,34 +1,42 @@
 import os
-from gtts import gTTS
 import docx
-from tkinter import Tk, filedialog
+import streamlit as st
+from gtts import gTTS
 
-def extract_text_from_docx(file_path):
-    doc = docx.Document(file_path)
+def extract_text_from_docx(file):
+    """Extract text from an uploaded Word document."""
+    doc = docx.Document(file)
     return "\n".join([para.text for para in doc.paragraphs])
 
 def text_to_speech(text, output_file="transcript_audio.mp3"):
+    """Convert text to speech and save as an audio file."""
     tts = gTTS(text, lang="en")
     tts.save(output_file)
-    print(f"Audio saved as {output_file}")
+    return output_file
 
-def main():
-    # Open file dialog to select the Word document
-    Tk().withdraw()  # Hide the root Tk window
-    file_path = filedialog.askopenfilename(title="Select a Word Document", filetypes=[("Word Documents", "*.docx")])
-    
-    if not file_path:
-        print("No file selected.")
-        return
-    
+# Streamlit UI
+st.title("Word Document to Speech Converter")
+
+# File uploader in Streamlit
+uploaded_file = st.file_uploader("Upload a Word Document", type=["docx"])
+
+if uploaded_file is not None:
     try:
-        text = extract_text_from_docx(file_path)
+        # Extract text
+        text = extract_text_from_docx(uploaded_file)
+        
         if text.strip():
-            text_to_speech(text)
-        else:
-            print("The document is empty.")
-    except Exception as e:
-        print(f"An error occurred: {e}")
+            st.write("Extracted Text:")
+            st.text_area("Text Content", text, height=250)
 
-if __name__ == "__main__":
-    main()
+            # Convert text to speech
+            audio_file = text_to_speech(text)
+
+            # Provide a download link
+            with open(audio_file, "rb") as file:
+                st.download_button(label="Download Speech", data=file, file_name="transcript_audio.mp3", mime="audio/mp3")
+        
+        else:
+            st.warning("The document is empty.")
+    except Exception as e:
+        st.error(f"An error occurred: {e}")
