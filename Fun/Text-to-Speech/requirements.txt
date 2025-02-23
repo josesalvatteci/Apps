@@ -1,2 +1,3 @@
 gtts
 python-docx
+streamlit
