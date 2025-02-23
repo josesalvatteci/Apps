@@ -67,3 +67,6 @@ if youtube_url:
             st.write(summary)
     else:
         st.error("Invalid YouTube URL. Please check and try again.")
+
+st.markdown("---")
+st.markdown("Built with AI by Christian Martinez. [Learn how to build this here](https://www.youtube.com/watch?v=dn6zWMuI2q8&t=129s)")
