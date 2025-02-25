@@ -1,55 +1,55 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
-import os
-from groq import Groq
-from dotenv import load_dotenv
 
-# Load API key securely
-load_dotenv()
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-if not GROQ_API_KEY:
-    st.error("🚨 API Key is missing! Set it in Streamlit Secrets or a .env file.")
-    st.stop()
+# File uploader and prompt input
+uploaded_file = st.file_uploader("Upload Excel file", type=["xlsx"])
+user_prompt = st.text_input("Enter visualization prompt")
 
-# Streamlit UI for file upload
-uploaded_file = st.file_uploader("Upload your Excel file", type=["xlsx"])
-if uploaded_file:
-    df = pd.read_excel(uploaded_file)
-    st.write("Data Preview:", df.head())
-    
-    # Create a sample prompt for the LLM
-    data_sample = df.head().to_json()
-    user_request = st.text_input("Describe your visualization (e.g., 'bar chart of sales'):")
-    
-    if user_request:
-        prompt = f"""
-        Using the following data sample: {data_sample},
-        generate Python code that creates a {user_request} using matplotlib or seaborn, just the code and nothing else
+if uploaded_file and user_prompt:
+    try:
+        # Read the Excel file into df
+        df = pd.read_excel(uploaded_file)
+        st.write("Data preview:", df.head())  # Verify df is loaded
+
+        # Generate the AI prompt (adjust based on your API)
+        ai_prompt = f"""
+        Write ONLY a Python function named create_plot that takes a pandas DataFrame df as input and returns a matplotlib figure.
+        Do NOT include import statements, comments, or any code outside the function definition.
+        Assume pandas as pd and matplotlib.pyplot as plt are already available.
+        The DataFrame df has columns: {', '.join(df.columns)}.
+        Create a bar chart based on this request: '{user_prompt}'.
         """
-        # Call Groq API
-        client = Groq(api_key=GROQ_API_KEY)
-        response = client.chat.completions.create(
-            messages=[
-                {"role": "system", "content": "You are a Python data visualization expert."},
-                {"role": "user", "content": prompt}
-            ],
-            model="llama3-8b-8192",
-        )
-        generated_code = response.choices[0].message.content
-        
-        st.subheader("Generated Code")
-        st.code(generated_code, language="python")
-        
-        # Execute the generated code safely
+        # Simulate API call (replace with your actual API call)
+        generated_code = """
+def create_plot(df):
+    total_sales = df.groupby('category')['sales'].sum()
+    fig, ax = plt.subplots()
+    total_sales.plot(kind='bar', ax=ax)
+    ax.set_title('Total Sales by Category')
+    ax.set_xlabel('Category')
+    ax.set_ylabel('Sales')
+    return fig
+        """
+
+        # Set up execution environment
+        globals_dict = {"pd": pd, "plt": plt, "df": df}
+        locals_dict = {}
+
+        # Execute the generated code
         try:
-            # Define a safe execution context
-            exec_globals = {
-                "df": df, 
-                "pd": pd, 
-                "plt": plt, 
-                "st": st
-            }
-            exec(generated_code, exec_globals)
+            st.write("Generated code:", generated_code)  # Debug output
+            exec(generated_code, globals_dict, locals_dict)
+            if "create_plot" not in locals_dict:
+                st.error("Generated code did not define 'create_plot' function.")
+            else:
+                create_plot = locals_dict["create_plot"]
+                fig = create_plot(df)
+                st.pyplot(fig)
         except Exception as e:
-            st.error(f"Error executing generated code: {e}")
+            st.error(f"Error executing generated code: {str(e)}")
+
+    except Exception as e:
+        st.error(f"Error processing file: {str(e)}")
+else:
+    st.info("Please upload an Excel file and enter a visualization prompt.")
