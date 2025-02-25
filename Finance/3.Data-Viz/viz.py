@@ -25,7 +25,7 @@ if uploaded_file:
     if user_request:
         prompt = f"""
         Using the following data sample: {data_sample},
-        generate Python code that creates a {user_request} using matplotlib or seaborn.
+        generate Python code that creates a {user_request} using matplotlib or seaborn, just the code and nothing else
         """
         # Call Groq API
         client = Groq(api_key=GROQ_API_KEY)
