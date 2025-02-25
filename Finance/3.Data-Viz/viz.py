@@ -8,6 +8,14 @@ import sys
 # Set your Groq API key
 GROQ_API_KEY = "your-groq-api-key"
 
+# Available AI models
+MODEL_OPTIONS = [
+    "llama-3.3-70b-versatile",
+    "llama-3.1-8b-instant",
+    "mixtral-8x7b-32768",
+    "llama3-70b-8192"
+]
+
 # Function to summarize the DataFrame
 def summarize_dataframe(df):
     """Creates a summary of the DataFrame for LLM context."""
@@ -20,7 +28,7 @@ def summarize_dataframe(df):
     return summary
 
 # Function to suggest visualizations based on data
-def suggest_visualizations(df_summary):
+def suggest_visualizations(df_summary, model):
     """Asks AI to suggest the best visualizations for the dataset."""
     prompt = f"""
     Given this dataset summary:
@@ -31,7 +39,7 @@ def suggest_visualizations(df_summary):
     """
 
     response = openai.ChatCompletion.create(
-        model="gpt-4-turbo",
+        model=model,
         messages=[{"role": "system", "content": prompt}],
         api_key=GROQ_API_KEY
     )
@@ -39,7 +47,7 @@ def suggest_visualizations(df_summary):
     return response["choices"][0]["message"]["content"]
 
 # Function to generate code using Groq API
-def generate_code(prompt, df_summary):
+def generate_code(prompt, df_summary, model):
     system_prompt = f"""
     You are a Python coding assistant. The user uploaded a dataset, and here is the summary:
     {df_summary}
@@ -49,7 +57,7 @@ def generate_code(prompt, df_summary):
     """
 
     response = openai.ChatCompletion.create(
-        model="gpt-4-turbo",
+        model=model,
         messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": prompt}
@@ -79,9 +87,12 @@ def execute_code_safely(code, globals_dict):
     return result, stderr.getvalue()
 
 # Streamlit UI
-st.title("AI-Powered Data Visualization")
+st.title("🚀 AI-Powered Data Visualization")
 
-uploaded_file = st.file_uploader("Upload an Excel or CSV file", type=["xlsx", "csv"])
+# Select AI model
+selected_model = st.selectbox("🧠 Choose an AI model:", MODEL_OPTIONS)
+
+uploaded_file = st.file_uploader("📂 Upload an Excel or CSV file", type=["xlsx", "csv"])
 
 if uploaded_file:
     df = pd.read_excel(uploaded_file) if uploaded_file.name.endswith("xlsx") else pd.read_csv(uploaded_file)
@@ -94,14 +105,14 @@ if uploaded_file:
 
     # Suggest visualizations
     st.subheader("🔍 AI-Suggested Visualizations")
-    suggestions = suggest_visualizations(df_summary)
+    suggestions = suggest_visualizations(df_summary, selected_model)
     st.write(suggestions)
 
     # User selects or enters a prompt
     user_prompt = st.text_area("✍️ Describe your visualization", "Create a bar chart of sales by month")
 
     if st.button("🎨 Generate Chart"):
-        code = generate_code(user_prompt, df_summary)
+        code = generate_code(user_prompt, df_summary, selected_model)
 
         st.subheader("💡 Generated Python Code:")
         st.code(code, language="python")
