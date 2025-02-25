@@ -1,5 +1,8 @@
 streamlit
-openai
 pandas
+numpy
 matplotlib
+seaborn
+groq
+python-dotenv
 openpyxl
