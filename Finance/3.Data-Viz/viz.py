@@ -23,6 +23,7 @@ if uploaded_file:
     user_request = st.text_input("Describe your visualization (e.g., 'bar chart of sales'):")
 
     if user_request:
+        # Create a prompt that instructs the LLM to output only the Python code
         prompt = f"""
         Using the following data sample: {data_sample},
         generate only the Python code (no markdown formatting or explanations) that creates a {user_request} using matplotlib or seaborn.
@@ -38,7 +39,7 @@ if uploaded_file:
         )
         generated_code = response.choices[0].message.content
         
-        # Extract code if wrapped in markdown
+        # Optional: Clean the generated code in case it's wrapped in markdown formatting.
         def extract_code(code_str):
             match = re.search(r"```(?:python)?\n(.*?)```", code_str, re.DOTALL)
             if match:
@@ -47,12 +48,14 @@ if uploaded_file:
         
         clean_code = extract_code(generated_code)
         
-        st.subheader("Generated Code")
-        st.code(clean_code, language="python")
+        # Show the generated code in an editable text area
+        editable_code = st.text_area("Edit Generated Code", clean_code, height=300)
         
-        # Execute the cleaned code safely
-        try:
-            exec_globals = {"df": df, "pd": pd, "plt": plt, "st": st}
-            exec(clean_code, exec_globals)
-        except Exception as e:
-            st.error(f"Error executing generated code: {e}")
+        # Display a button that executes the code when clicked
+        if st.button("Run Code"):
+            try:
+                # Define a controlled execution context with necessary globals
+                exec_globals = {"df": df, "pd": pd, "plt": plt, "st": st}
+                exec(editable_code, exec_globals)
+            except Exception as e:
+                st.error(f"Error executing code: {e}")
