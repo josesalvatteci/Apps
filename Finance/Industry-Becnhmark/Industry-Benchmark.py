@@ -23,13 +23,23 @@ ticker_input = st.text_input("Enter a company ticker symbol (e.g., AAPL, MSFT, T
 if ticker_input:
     try:
         # Fetch financial data
-        st.write(f"Fetching data for {ticker_input}...")
+        st.write(f"🔄 Fetching data for {ticker_input}...")
         company = yf.Ticker(ticker_input)
 
-        # Extract key financial data
-        financials = company.quarterly_financials.T
-        balance_sheet = company.quarterly_balance_sheet.T
-        cashflow = company.quarterly_cashflow.T
+        # Extract key financial data safely
+        def get_financial_data(data_type):
+            try:
+                data = getattr(company, data_type)
+                if data is not None and not data.empty:
+                    return data.T  # Transpose for better readability
+                else:
+                    return pd.DataFrame({"Error": [f"No {data_type} data found"]})
+            except Exception as e:
+                return pd.DataFrame({"Error": [str(e)]})
+
+        financials = get_financial_data("quarterly_financials")
+        balance_sheet = get_financial_data("quarterly_balance_sheet")
+        cashflow = get_financial_data("quarterly_cashflow")
 
         # Save to Excel
         excel_filename = f"{ticker_input}_financials.xlsx"
@@ -40,7 +50,26 @@ if ticker_input:
 
         # Display in Streamlit
         st.subheader(f"📜 {ticker_input} - Financials Overview")
-        st.write(financials)
+
+        if not financials.empty:
+            st.write("📊 **Income Statement**")
+            st.dataframe(financials)
+        else:
+            st.warning("⚠️ No income statement data available.")
+
+        if not balance_sheet.empty:
+            st.write("🏦 **Balance Sheet**")
+            st.dataframe(balance_sheet)
+        else:
+            st.warning("⚠️ No balance sheet data available.")
+
+        if not cashflow.empty:
+            st.write("💰 **Cash Flow Statement**")
+            st.dataframe(cashflow)
+        else:
+            st.warning("⚠️ No cash flow data available.")
+
+        # Download Button
         st.download_button(
             label="📥 Download Financial Data (Excel)",
             data=open(excel_filename, "rb").read(),
