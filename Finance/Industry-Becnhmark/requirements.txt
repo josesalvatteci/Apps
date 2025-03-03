@@ -4,3 +4,4 @@ yfinance
 groq
 python-dotenv
 openpyxl
+matplotlib
