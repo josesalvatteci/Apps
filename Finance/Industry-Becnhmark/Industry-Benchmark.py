@@ -15,8 +15,8 @@ if not GROQ_API_KEY:
     st.stop()
 
 # **📊 Streamlit UI**
-st.set_page_config(page_title="AI Financial Analysis", page_icon="📈", layout="wide")
-st.title("📊 AI-Powered Financial Analysis")
+st.set_page_config(page_title="AI Financial Benchmarking Tool", page_icon="📈", layout="wide")
+st.title("📊 AI Financial Benchmarking Tool")
 
 # **💡 User Selection: Single or Multi-Company Analysis**
 analysis_type = st.radio("Select Analysis Type:", ["Single Company Analysis", "Multi-Company Comparison"])
