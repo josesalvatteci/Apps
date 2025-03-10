@@ -1,7 +1,7 @@
 streamlit
+matplotlib
 pandas
 numpy
-matplotlib
 openpyxl
 fbprophet
 python-dotenv
