@@ -5,4 +5,3 @@ matplotlib
 openpyxl
 fbprophet
 python-dotenv
-matplotlib
