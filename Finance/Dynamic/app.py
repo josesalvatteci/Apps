@@ -130,4 +130,9 @@ elif pagina == "Rendiconto Finanziario":
     if df.shape[1] > 1:
         prima_colonna = df.columns[0]
         df[prima_colonna] = pd.to_numeric(df[prima_colonna], errors='coerce')
-        df = df.sort_values(by=prima_
+        df = df.sort_values(by=prima_colonna).drop(columns=[prima_colonna])
+
+        col_val = df.columns[1]
+        df[col_val] = df[col_val].apply(format_miles)
+
+    st.dataframe(df, use_container_width=True, height=800)
